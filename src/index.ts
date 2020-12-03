@@ -6,14 +6,19 @@ export function getAuthToken() {
   return localStorage.getItem(AUTH_TOKEN)
 }
 
-export function setAuthToken(token) {
+export function setAuthToken(token: string) {
   if (typeof localStorage === "undefined") return null
   if (token === null || token === undefined)
     return localStorage.removeItem(AUTH_TOKEN)
   return localStorage.setItem(AUTH_TOKEN, token)
 }
 
-function client(url) {
+export function deleteAuthToken() {
+  if (typeof localStorage === "undefined") return null
+  return localStorage.removeItem(AUTH_TOKEN)
+}
+
+function client(url: string) {
   const client = new GraphQLClient(url, {
     mode: "cors",
   })
@@ -25,8 +30,8 @@ function client(url) {
   return client
 }
 
-export default function makeClient(url) {
-  const query = async (query, variables?) => {
+export default function makeClient(url: string) {
+  const query = async (query: string, variables?: object) => {
     const instance = client(url)
 
     if (process.env.GRAPHQL_DEBUG) {
@@ -47,7 +52,7 @@ export default function makeClient(url) {
       } catch (err) {
         const { data, errors, status } = err.response
         if (status === 401) {
-          setAuthToken(null)
+          deleteAuthToken()
         } else {
           console.error(JSON.stringify(err, undefined, 2))
           reject(errors)
@@ -56,7 +61,7 @@ export default function makeClient(url) {
     })
   }
 
-  const mutation = async (mutation, variables = {}) => {
+  const mutation = async (mutation: string, variables?: object) => {
     const instance = client(url)
 
     if (process.env.GRAPHQL_DEBUG) {
@@ -78,7 +83,7 @@ export default function makeClient(url) {
       } catch (err) {
         const { data, errors, status } = err.response
         if (status === 401) {
-          setAuthToken(null)
+          deleteAuthToken()
         } else {
           console.error(JSON.stringify(err, undefined, 2))
           reject(errors)
