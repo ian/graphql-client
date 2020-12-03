@@ -1,0 +1,11 @@
+{
+  "name": "graphql-client",
+  "version": "0.1.0",
+  "description": "A simpler to use GraphQL client for Javascript",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ian Hunter",
+  "license": "ISC"
+}
