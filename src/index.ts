@@ -1,4 +1,4 @@
-import { GraphQLClient, gql } from "graphql-request"
+import { GraphQLClient, gql } from "graphql-request/src"
 
 let auth: string | null = null
 
@@ -77,7 +77,7 @@ export default function makeClient(url: string, opts: Opts = {}) {
       }
     }
 
-    return makeRequest(url, mutation, variables)
+    return makeRequest(url, mutation, variables, auth)
   }
 
   return {
