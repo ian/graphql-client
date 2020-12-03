@@ -1,9 +1,11 @@
 declare type GQLResponse = {
-    status: number;
-    data: object;
-    errors?: object[];
+    [key: string]: any;
 };
-export default function makeClient(url: string, opts?: {}): {
+declare type Opts = {
+    debug?: boolean;
+    logger?: (any: any) => void;
+};
+export default function makeClient(url: string, opts?: Opts): {
     query: (query: string, variables?: object | undefined) => Promise<GQLResponse>;
     mutation: (mutation: string, variables?: object | undefined) => Promise<GQLResponse>;
     setAuth: (a: string) => void;

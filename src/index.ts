@@ -31,12 +31,17 @@ async function makeRequest(
 }
 
 type GQLResponse = {
-  status: number
-  data: object
-  errors?: object[]
+  [key: string]: any
 }
 
-export default function makeClient(url: string, opts = {}) {
+type Opts = {
+  debug?: boolean
+  logger?: (any: any) => void
+}
+
+export default function makeClient(url: string, opts: Opts = {}) {
+  const { debug, logger } = opts
+
   const setAuth = (a: string) => {
     auth = a
   }
@@ -49,10 +54,12 @@ export default function makeClient(url: string, opts = {}) {
     query: string,
     variables?: object
   ): Promise<GQLResponse> => {
-    if (process.env.GRAPHQL_DEBUG) {
-      console.log("QUERY")
-      console.log(query)
-      console.log(JSON.stringify(variables, null, 2))
+    if (debug) {
+      if (logger) {
+        logger("QUERY")
+        logger(query)
+        logger(JSON.stringify(variables, null, 2))
+      }
     }
 
     return makeRequest(url, query, variables, auth)
@@ -62,10 +69,12 @@ export default function makeClient(url: string, opts = {}) {
     mutation: string,
     variables?: object
   ): Promise<GQLResponse> => {
-    if (process.env.GRAPHQL_DEBUG) {
-      console.log("MUTATION")
-      console.log(mutation)
-      console.log(JSON.stringify(variables, null, 2))
+    if (debug) {
+      if (logger) {
+        logger("MUTATION")
+        logger(mutation)
+        logger(JSON.stringify(variables, null, 2))
+      }
     }
 
     return makeRequest(url, mutation, variables)
