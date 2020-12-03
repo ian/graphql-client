@@ -1,4 +1,4 @@
-import { GraphQLClient, gql } from "graphql-request/src"
+import { GraphQLClient, gql } from "graphql-request"
 
 let auth: string | null = null
 
