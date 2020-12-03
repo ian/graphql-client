@@ -1,13 +1,18 @@
 import { GraphQLClient, gql } from "graphql-request"
 
-let auth: string | null = null
+type MakeRequestOpts = {
+  auth?: string | null
+  onError?: (err: any) => void
+}
 
 async function makeRequest(
   url: string,
   body: string,
   variables?: object,
-  auth?: string | null
+  opts: MakeRequestOpts = {}
 ): Promise<GQLResponse> {
+  const { auth, onError } = opts
+
   return new Promise(async (resolve, reject) => {
     try {
       const client = new GraphQLClient(url, {
@@ -25,6 +30,9 @@ async function makeRequest(
 
       resolve(res)
     } catch (err) {
+      if (onError) {
+        onError(err)
+      }
       reject(err.response)
     }
   })
@@ -34,13 +42,16 @@ type GQLResponse = {
   [key: string]: any
 }
 
-type Opts = {
+type MakeClientOpts = {
   debug?: boolean
   logger?: (any: any) => void
+  onError?: (err: any) => void
 }
 
-export default function makeClient(url: string, opts: Opts = {}) {
-  const { debug, logger } = opts
+export default function makeClient(url: string, opts: MakeClientOpts = {}) {
+  const { debug, logger, onError } = opts
+
+  let auth: string | null = null
 
   const setAuth = (a: string) => {
     auth = a
@@ -62,7 +73,7 @@ export default function makeClient(url: string, opts: Opts = {}) {
       }
     }
 
-    return makeRequest(url, query, variables, auth)
+    return makeRequest(url, query, variables, { auth, onError })
   }
 
   const mutation = async (
@@ -77,7 +88,7 @@ export default function makeClient(url: string, opts: Opts = {}) {
       }
     }
 
-    return makeRequest(url, mutation, variables, auth)
+    return makeRequest(url, mutation, variables, { auth, onError })
   }
 
   return {
