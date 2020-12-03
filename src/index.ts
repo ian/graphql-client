@@ -1,99 +1,80 @@
 import { GraphQLClient, gql } from "graphql-request"
-const AUTH_TOKEN = "__auth_token"
 
-export function getAuthToken() {
-  if (typeof localStorage === "undefined") return null
-  return localStorage.getItem(AUTH_TOKEN)
-}
+let auth: string | null = null
 
-export function setAuthToken(token: string) {
-  if (typeof localStorage === "undefined") return null
-  if (token === null || token === undefined)
-    return localStorage.removeItem(AUTH_TOKEN)
-  return localStorage.setItem(AUTH_TOKEN, token)
-}
+async function makeRequest(
+  url: string,
+  body: string,
+  variables?: object,
+  auth?: string | null
+): Promise<GQLResponse> {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const client = new GraphQLClient(url, {
+        mode: "cors",
+      })
 
-export function deleteAuthToken() {
-  if (typeof localStorage === "undefined") return null
-  return localStorage.removeItem(AUTH_TOKEN)
-}
+      if (auth) client.setHeader("Authorization", auth)
 
-function client(url: string) {
-  const client = new GraphQLClient(url, {
-    mode: "cors",
+      const res = await client.request(
+        gql`
+          ${body}
+        `,
+        variables
+      )
+
+      resolve(res)
+    } catch (err) {
+      reject(err.response)
+    }
   })
-  const token = getAuthToken()
-  if (token) {
-    client.setHeader("Authorization", token)
-  }
-  client.setHeader("Content-Type", "application/json")
-  return client
 }
 
-export default function makeClient(url: string) {
-  const query = async (query: string, variables?: object) => {
-    const instance = client(url)
+type GQLResponse = {
+  status: number
+  data: object
+  errors?: object[]
+}
 
+export default function makeClient(url: string, opts = {}) {
+  const setAuth = (a: string) => {
+    auth = a
+  }
+
+  const clearAuth = () => {
+    auth = null
+  }
+
+  const query = async (
+    query: string,
+    variables?: object
+  ): Promise<GQLResponse> => {
     if (process.env.GRAPHQL_DEBUG) {
       console.log("QUERY")
       console.log(query)
       console.log(JSON.stringify(variables, null, 2))
     }
 
-    return new Promise(async (resolve, reject) => {
-      try {
-        const res = await instance.request(
-          gql`
-            ${query}
-          `,
-          variables
-        )
-        resolve(res)
-      } catch (err) {
-        const { data, errors, status } = err.response
-        if (status === 401) {
-          deleteAuthToken()
-        } else {
-          console.error(JSON.stringify(err, undefined, 2))
-          reject(errors)
-        }
-      }
-    })
+    return makeRequest(url, query, variables, auth)
   }
 
-  const mutation = async (mutation: string, variables?: object) => {
-    const instance = client(url)
-
+  const mutation = async (
+    mutation: string,
+    variables?: object
+  ): Promise<GQLResponse> => {
     if (process.env.GRAPHQL_DEBUG) {
       console.log("MUTATION")
       console.log(mutation)
       console.log(JSON.stringify(variables, null, 2))
     }
 
-    return new Promise(async (resolve, reject) => {
-      try {
-        const res = await instance.request(
-          gql`
-            ${mutation}
-          `,
-          variables
-        )
-
-        resolve(res)
-      } catch (err) {
-        const { data, errors, status } = err.response
-        if (status === 401) {
-          deleteAuthToken()
-        } else {
-          console.error(JSON.stringify(err, undefined, 2))
-          reject(errors)
-        }
-      }
-    })
+    return makeRequest(url, mutation, variables)
   }
 
   return {
     query,
     mutation,
+    setAuth,
+    clearAuth,
   }
 }
