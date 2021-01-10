@@ -1,5 +1,9 @@
 import { GraphQLClient, gql } from "graphql-request"
 
+type GQLResponse = {
+  [key: string]: any
+}
+
 type MakeRequestOpts = {
   auth?: string | null
   onError?: (err: any) => void
@@ -13,33 +17,23 @@ async function makeRequest(
 ): Promise<GQLResponse> {
   const { auth, onError } = opts
 
-  return new Promise(async (resolve, reject) => {
-    try {
-      const client = new GraphQLClient(url, {
-        mode: "cors",
-      })
+  const client = new GraphQLClient(url, {
+    mode: "cors",
+  })
 
-      if (auth) client.setHeader("Authorization", auth)
-
-      const res = await client.request(
-        gql`
-          ${body}
-        `,
-        variables
-      )
-
-      resolve(res)
-    } catch (err) {
+  if (auth) client.setHeader("Authorization", auth)
+  return client
+    .request(
+      gql`
+        ${body}
+      `,
+      variables
+    )
+    .catch((err) => {
       if (onError) {
         onError(err)
       }
-      reject(err.response)
-    }
-  })
-}
-
-type GQLResponse = {
-  [key: string]: any
+    })
 }
 
 type MakeClientOpts = {
